@@ -1,19 +1,33 @@
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import Login from './pages/Login';
-import Dashboard from './pages/Dashboard';
-import MedicalRecord from './pages/MedicalRecord';
-import useAuth from './hooks/useAuth';
+import { AuthProvider } from '@context/AuthContext';
+import { PatientProvider } from '@context/PatientContext';
+import { NotificationProvider } from '@context/NotificationContext';
 
-export default function App() {
-  const { token } = useAuth();
+// Pages
+import SearchPatient from '@pages/SearchPatient';
+import MedicalRecordDashboard from '@pages/MedicalRecordDashboard';
+import AuditHistory from '@pages/AuditHistory';
+import NotFound from '@pages/NotFound';
 
+function App() {
   return (
     <Router>
-      <Routes>
-        <Route path="/" element={token ? <Navigate to="/dashboard" /> : <Login />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/records/:patientId" element={<MedicalRecord />} />
-      </Routes>
+      <AuthProvider>
+        <NotificationProvider>
+          <PatientProvider>
+            <Routes>
+              <Route path="/" element={<Navigate to="/search" replace />} />
+              <Route path="/search" element={<SearchPatient />} />
+              <Route path="/dashboard/:patientId" element={<MedicalRecordDashboard />} />
+              <Route path="/history/:patientId" element={<AuditHistory />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </PatientProvider>
+        </NotificationProvider>
+      </AuthProvider>
     </Router>
   );
 }
+
+export default App;
