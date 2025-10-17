@@ -7,6 +7,20 @@ export const useAppointment = () => {
 
   const clearError = useCallback(() => setError(null), []);
 
+  const getPatientDetails = useCallback(async (patientId) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const patient = await appointmentService.getPatientDetails(patientId);
+      return patient;
+    } catch (err) {
+      setError(err);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   const getDoctors = useCallback(async (specialty) => {
     setLoading(true);
     setError(null);
@@ -41,20 +55,6 @@ export const useAppointment = () => {
     try {
       const result = await appointmentService.createAppointment(appointmentData);
       return result;
-    } catch (err) {
-      setError(err);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const getPatientDetails = useCallback(async (patientId) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await appointmentService.getPatientDetails(patientId);
-      return response;
     } catch (err) {
       setError(err);
       throw err;
