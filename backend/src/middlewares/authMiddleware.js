@@ -1,62 +1,64 @@
+// backend/src/middleware/authMiddleware.js
 const jwt = require('jsonwebtoken');
-const Patient = require('../models/Patient');
 
-const authenticate = async (req, res, next) => {
-  try {
-    const authHeader = req.headers.authorization;
-    
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({
+class AuthMiddleware {
+  authenticate(req, res, next) {
+    try {
+      // Get token from header
+      const authHeader = req.headers.authorization;
+      
+      // Demo token for development
+      const DEMO_TOKEN = 'demo-token-123';
+      
+      if (authHeader && authHeader === `Bearer ${DEMO_TOKEN}`) {
+        // Demo user for development
+        req.user = {
+          id: 'PAT001', // Use one of our mock patient IDs
+          email: 'john.smith@email.com'
+        };
+        return next();
+      }
+
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({
+          success: false,
+          message: 'No token provided'
+        });
+      }
+
+      const token = authHeader.substring(7); // Remove 'Bearer ' prefix
+
+      // For real JWT tokens
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      
+      // Add user info to request
+      req.user = {
+        id: decoded.id,
+        email: decoded.email
+      };
+
+      next();
+    } catch (error) {
+      if (error.name === 'JsonWebTokenError') {
+        return res.status(401).json({
+          success: false,
+          message: 'Invalid token'
+        });
+      }
+      
+      if (error.name === 'TokenExpiredError') {
+        return res.status(401).json({
+          success: false,
+          message: 'Token expired'
+        });
+      }
+
+      return res.status(500).json({
         success: false,
-        message: 'No token provided. Authorization denied.'
+        message: 'Authentication failed'
       });
     }
-
-    const token = authHeader.split(' ')[1];
-
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    const patient = await Patient.findById(decoded.id).select('-password');
-    
-    if (!patient || !patient.isActive) {
-      return res.status(401).json({
-        success: false,
-        message: 'Patient not found or inactive'
-      });
-    }
-
-    req.user = {
-      id: patient._id,
-      patientId: patient.patientId,
-      name: `${patient.firstName} ${patient.lastName}`,
-      email: patient.email
-    };
-
-    next();
-  } catch (error) {
-    console.error('Authentication error:', error);
-    
-    if (error.name === 'JsonWebTokenError') {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid token'
-      });
-    }
-    
-    if (error.name === 'TokenExpiredError') {
-      return res.status(401).json({
-        success: false,
-        message: 'Token expired'
-      });
-    }
-
-    return res.status(500).json({
-      success: false,
-      message: 'Authentication failed'
-    });
   }
-};
+}
 
-module.exports = {
-  authenticate
-};
+module.exports = new AuthMiddleware();

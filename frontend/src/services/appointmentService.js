@@ -1,6 +1,7 @@
+// frontend/src/services/appointmentService.js
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || '/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 const apiClient = axios.create({
   baseURL: API_URL,
@@ -9,32 +10,17 @@ const apiClient = axios.create({
   }
 });
 
-// Request interceptor to add token
-apiClient.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
+// Demo token for development (optional now since auth is commented out)
+const DEMO_TOKEN = 'demo-token-123';
 
-apiClient.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      window.location.href = '/login';
-    }
-    return Promise.reject(error);
-  }
-);
+// Add token to all requests (optional)
+apiClient.interceptors.request.use((config) => {
+  config.headers.Authorization = `Bearer ${DEMO_TOKEN}`;
+  return config;
+});
 
 class AppointmentService {
-  
-   async getDoctorsBySpecialty(specialty) {
+  async getDoctorsBySpecialty(specialty) {
     try {
       const response = await apiClient.get(`/appointments/doctors/${specialty}`);
       return response.data;
@@ -54,28 +40,11 @@ class AppointmentService {
 
   async createAppointment(appointmentData) {
     try {
+      console.log('Sending appointment data:', appointmentData);
       const response = await apiClient.post('/appointments', appointmentData);
       return response.data;
     } catch (error) {
-      throw this.handleError(error);
-    }
-  }
-
-  async getPatientAppointments(filters = {}) {
-    try {
-      const queryParams = new URLSearchParams(filters).toString();
-      const response = await apiClient.get(`/appointments/patient?${queryParams}`);
-      return response.data;
-    } catch (error) {
-      throw this.handleError(error);
-    }
-  }
-
-  async cancelAppointment(appointmentId) {
-    try {
-      const response = await apiClient.put(`/appointments/${appointmentId}/cancel`);
-      return response.data;
-    } catch (error) {
+      console.error('API Error:', error.response?.data);
       throw this.handleError(error);
     }
   }
