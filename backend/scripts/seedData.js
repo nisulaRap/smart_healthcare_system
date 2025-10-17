@@ -373,17 +373,14 @@ const seedDatabase = async () => {
     await mongoose.connect(process.env.MONGODB_URI);
     console.log('Connected to MongoDB');
 
-    // Clear existing data
     await Doctor.deleteMany({});
     await Patient.deleteMany({});
     await Appointment.deleteMany({});
     console.log('Cleared existing data');
 
-    // Insert mock doctors
     const doctors = await Doctor.insertMany(mockDoctors);
     console.log(`Inserted ${doctors.length} doctors`);
 
-    // Insert mock patients
     const patients = await Patient.insertMany(mockPatients);
     console.log(`Inserted ${patients.length} patients`);
 
