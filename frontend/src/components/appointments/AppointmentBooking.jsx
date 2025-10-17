@@ -1,4 +1,3 @@
-// frontend/src/components/appointments/AppointmentBooking.jsx
 import { useState, useEffect } from 'react';
 import { Calendar, Clock, User, CheckCircle, AlertCircle, Heart, Droplet, Baby, Bone, Brain, Stethoscope, ArrowLeft, Star, Award, X } from 'lucide-react';
 import { useAppointment } from '../../hooks/useAppointment';
@@ -55,7 +54,6 @@ const AppointmentBooking = () => {
     }
   ];
 
-  // Fetch doctors when specialty is selected
   const handleSpecialtySelect = async (selectedSpecialty) => {
     try {
       clearError();
@@ -70,7 +68,6 @@ const AppointmentBooking = () => {
     }
   };
 
-  // Fetch available slots when date is selected
   const handleDateSelect = async () => {
     if (!selectedDoctor || !appointmentDate) return;
     
@@ -85,7 +82,6 @@ const AppointmentBooking = () => {
     }
   };
 
-  // Book appointment
   const handleBookAppointment = async () => {
     if (!selectedDoctor || !selectedSlot || !reasonForVisit.trim()) return;
 
@@ -132,7 +128,6 @@ const AppointmentBooking = () => {
     clearError();
   };
 
-  // Auto-fetch slots when date changes
   useEffect(() => {
     if (appointmentDate && selectedDoctor) {
       handleDateSelect();
@@ -143,7 +138,7 @@ const AppointmentBooking = () => {
     <div className="h-screen bg-gradient-to-br from-blue-50 to-indigo-100 overflow-hidden">
       {/* Header */}
       <div className="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between text-center">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">
               Book Your Appointment
@@ -152,14 +147,10 @@ const AppointmentBooking = () => {
               Schedule your medical appointment with our expert healthcare professionals
             </p>
           </div>
-          <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-            <X className="w-6 h-6 text-gray-500" />
-          </button>
         </div>
       </div>
 
       <div className="h-[calc(100vh-80px)] flex flex-col">
-        {/* Tab Navigation */}
         <div className="bg-white border-b border-gray-200 px-6 py-4">
           <div className="flex space-x-1">
             {/* Tab 1: Select Specialty */}
