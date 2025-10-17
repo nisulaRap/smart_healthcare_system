@@ -1,9 +1,10 @@
-// server.js
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const connectDB = require('./src/config/database');
+
+// Import routes directly (no factory function needed)
 const medicalRoutes = require('./src/routes/medicalRecordRoutes');
 
 const app = express();
@@ -14,24 +15,18 @@ app.use(express.json());
 app.use(cookieParser());
 
 // -------------------- DATABASE CONNECTION --------------------
-connectDB(); // calls your database.js connect function
+connectDB();
 
 // -------------------- ROUTES --------------------
 app.get('/', (req, res) => {
   res.send('API is running...');
 });
 
+// Use medical routes
 app.use('/api/medical', medicalRoutes);
 
-// -------------------- SERVER LISTEN --------------------
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`✅ Server running on port ${PORT}`);
-});
-
-
 // -------------------- TEST ROUTES (NO AUTH NEEDED) --------------------
-// Mock data
+// Mock data - UNCHANGED
 const mockPatient = {
   _id: '64patient123',
   name: 'John Doe',
@@ -79,7 +74,7 @@ const mockAuditLogs = [
   }
 ];
 
-// Test route to get medical record
+// Test route to get medical record - UNCHANGED
 app.get('/api/test/medical/patient/:patientId', (req, res) => {
   console.log('📋 GET Medical Record Test - Patient ID:', req.params.patientId);
   res.json({ 
@@ -89,7 +84,7 @@ app.get('/api/test/medical/patient/:patientId', (req, res) => {
   });
 });
 
-// Test route to update medical record  
+// Test route to update medical record - UNCHANGED  
 app.put('/api/test/medical/patient/:patientId', (req, res) => {
   console.log('✏️ UPDATE Medical Record Test - Patient ID:', req.params.patientId);
   console.log('Request body:', req.body);
@@ -108,7 +103,7 @@ app.put('/api/test/medical/patient/:patientId', (req, res) => {
   });
 });
 
-// Test route to get audit logs
+// Test route to get audit logs - UNCHANGED
 app.get('/api/test/medical/patient/:patientId/audit', (req, res) => {
   console.log('📊 GET Audit Logs Test - Patient ID:', req.params.patientId);
   res.json({ 
@@ -117,11 +112,19 @@ app.get('/api/test/medical/patient/:patientId/audit', (req, res) => {
   });
 });
 
-// Simple test route to check if server is working
+// Simple test route to check if server is working - UNCHANGED
 app.get('/api/test/status', (req, res) => {
   res.json({ 
     status: '✅ Server is running!',
     timestamp: new Date().toISOString(),
     message: 'Use /api/test/ routes for testing without authentication'
   });
+});
+
+// -------------------- SERVER LISTEN --------------------
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`✅ Server running on port ${PORT}`);
+  console.log(`📋 Medical API: http://localhost:${PORT}/api/medical`);
+  console.log(`🧪 Test Routes: http://localhost:${PORT}/api/test/status`);
 });

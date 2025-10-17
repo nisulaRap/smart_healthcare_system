@@ -1,112 +1,90 @@
-// controllers/medicalRecordController.js
-const Patient = require('../models/Patient');
-const MedicalRecord = require('../models/MedicalRecord');
-const AuditLog = require('../models/AuditLog');
+// Fix import paths - make sure they're correct
+const MedicalRecordService = require('../services/MedicalRecordService');
+const AuditService = require('../services/AuditService');
+const PatientService = require('../services/PatientService');
+const { ValidationError, NotFoundError, ConflictError } = require('../utils/errors');
 
-/**
- * @desc Get medical record for a patient
- * @route GET /api/medical/patient/:patientId
- * @access Authorized roles (doctor, nurse, etc.)
- */
-exports.getMedicalRecord = async (req, res) => {
-  try {
-    const patientId = req.params.patientId;
-    const patient = await Patient.findById(patientId);
-    if (!patient) return res.status(404).json({ message: 'Patient not found' });
-
-    const record = await MedicalRecord.findOne({ patient: patientId }).populate('updatedBy', 'name role');
-
-    // Audit log
-    await AuditLog.create({
-      action: 'record_view',
-      user: req.user.id,
-      patient: patientId,
-      recordId: record ? record._id : null,
-      details: { ip: req.ip }
-    });
-
-    return res.json({ patient, record });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Server error' });
+class MedicalRecordController {
+  constructor() {
+    console.log('Initializing MedicalRecordController...');
+    
+    // Initialize services
+    this.auditService = new AuditService();
+    this.patientService = new PatientService();
+    
+    // Debug log to check if MedicalRecordService is a constructor
+    console.log('MedicalRecordService type:', typeof MedicalRecordService);
+    
+    this.medicalRecordService = new MedicalRecordService(
+      this.auditService, 
+      this.patientService
+    );
+    
+    console.log('MedicalRecordController initialized successfully');
   }
-};
 
-/**
- * @desc Update medical record for a patient
- * @route PUT /api/medical/patient/:patientId
- * @access Authorized roles (doctor, nurse, etc.)
- */
-exports.updateMedicalRecord = async (req, res) => {
-  try {
-    const patientId = req.params.patientId;
-    const changes = req.body;
+  getMedicalRecord = async (req, res) => {
+    try {
+      const { patientId } = req.params;
+      const userId = req.user.id;
+      const ip = req.ip;
 
-    if (!changes) return res.status(400).json({ message: 'No changes provided' });
+      const result = await this.medicalRecordService.getPatientRecord(
+        patientId, 
+        userId, 
+        ip
+      );
 
-    let record = await MedicalRecord.findOne({ patient: patientId });
-    if (!record) record = new MedicalRecord({ patient: patientId });
-
-    // Check for version conflict
-    if (typeof changes.version !== 'undefined' && changes.version !== record.version) {
-      return res.status(409).json({
-        message: 'Record version conflict. Please refresh to get the latest data.',
-        currentVersion: record.version
-      });
+      res.json(result);
+    } catch (error) {
+      this.handleError(res, error);
     }
+  };
 
-    const previous = record.toObject();
-    const allowed = ['notes', 'diagnoses', 'prescriptions', 'vitals', 'labResults'];
+  updateMedicalRecord = async (req, res) => {
+    try {
+      const { patientId } = req.params;
+      const { body: changes, user: { id: userId }, ip } = req;
 
-    allowed.forEach(field => {
-      if (typeof changes[field] !== 'undefined') {
-        record[field] = changes[field];
-      }
-    });
+      const record = await this.medicalRecordService.updatePatientRecord(
+        patientId,
+        changes,
+        userId,
+        ip
+      );
 
-    record.updatedBy = req.user.id;
-    record.version = (record.version || 0) + 1;
-    await record.save();
+      res.json({ record });
+    } catch (error) {
+      this.handleError(res, error);
+    }
+  };
 
-    // Audit log with diffs
-    const diff = {};
-    allowed.forEach(f => {
-      if (JSON.stringify(previous[f]) !== JSON.stringify(record[f])) {
-        diff[f] = { before: previous[f], after: record[f] };
-      }
-    });
+  getAuditLogs = async (req, res) => {
+    try {
+      const { patientId } = req.params;
+      
+      const logs = await this.auditService.getPatientAuditLogs(patientId);
+      
+      res.json({ logs });
+    } catch (error) {
+      this.handleError(res, error);
+    }
+  };
 
-    await AuditLog.create({
-      action: 'record_update',
-      user: req.user.id,
-      patient: patientId,
-      recordId: record._id,
-      details: diff,
-      ip: req.ip
-    });
+  handleError(res, error) {
+    console.error('MedicalRecordController Error:', error);
 
-    return res.json({ record });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Server error' });
+    switch (error.constructor) {
+      case ValidationError:
+        return res.status(400).json({ message: error.message });
+      case NotFoundError:
+        return res.status(404).json({ message: error.message });
+      case ConflictError:
+        return res.status(409).json({ message: error.message, ...error.details });
+      default:
+        return res.status(500).json({ message: 'Server error' });
+    }
   }
-};
+}
 
-/**
- * @desc Get audit logs for a patient
- * @route GET /api/medical/patient/:patientId/audit
- * @access Admins & doctors
- */
-exports.getAuditLogs = async (req, res) => {
-  try {
-    const logs = await AuditLog.find({ patient: req.params.patientId })
-      .populate('user', 'name role')
-      .sort({ timestamp: -1 })
-      .limit(200);
-
-    res.json({ logs });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Server error' });
-  }
-};
+module.exports = MedicalRecordController;

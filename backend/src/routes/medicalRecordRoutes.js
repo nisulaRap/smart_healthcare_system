@@ -1,37 +1,33 @@
-// routes/medicalRecordRoutes.js
 const express = require('express');
 const router = express.Router();
-const {
-  getMedicalRecord,
-  updateMedicalRecord,
-  getAuditLogs
-} = require('../controllers/medicalRecordController');
 
+// Make sure the path is correct - lowercase 'c' in controller
+const MedicalRecordController = require('../controllers/medicalRecordController');
 const authenticate = require('../middleware/authenticate');
 const authorizeRole = require('../middleware/authorizeRole');
 
-// GET medical record for patient
+// Simple initialization
+const medicalRecordController = new MedicalRecordController();
+
 router.get(
   '/patient/:patientId',
   authenticate,
   authorizeRole(['doctor', 'nurse', 'lab_technician', 'admin', 'reception']),
-  getMedicalRecord
+  medicalRecordController.getMedicalRecord
 );
 
-// UPDATE medical record
 router.put(
   '/patient/:patientId',
   authenticate,
   authorizeRole(['doctor', 'nurse', 'lab_technician', 'admin']),
-  updateMedicalRecord
+  medicalRecordController.updateMedicalRecord
 );
 
-// GET audit logs
 router.get(
   '/patient/:patientId/audit',
   authenticate,
   authorizeRole(['doctor', 'admin']),
-  getAuditLogs
+  medicalRecordController.getAuditLogs
 );
 
 module.exports = router;
