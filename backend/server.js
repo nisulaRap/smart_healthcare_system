@@ -3,6 +3,7 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const connectDB = require('./src/config/database');
 const appointmentRoutes = require('./src/routes/appointmentRoutes');
+const patientRoutes = require('./src/routes/patientRoutes');
 
 dotenv.config();
 
@@ -23,6 +24,7 @@ app.use((req, res, next) => {
 });
 
 app.use('/api/appointments', appointmentRoutes);
+app.use('/api/patients', patientRoutes);
 
 app.get('/health', (req, res) => {
   res.status(200).json({ 
