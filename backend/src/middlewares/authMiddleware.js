@@ -1,19 +1,15 @@
-// backend/src/middleware/authMiddleware.js
 const jwt = require('jsonwebtoken');
 
 class AuthMiddleware {
   authenticate(req, res, next) {
     try {
-      // Get token from header
       const authHeader = req.headers.authorization;
       
-      // Demo token for development
-      const DEMO_TOKEN = 'demo-token-123';
+      const DEMO_TOKEN = 'demo-token-125';
       
       if (authHeader && authHeader === `Bearer ${DEMO_TOKEN}`) {
-        // Demo user for development
         req.user = {
-          id: 'PAT001', // Use one of our mock patient IDs
+          id: 'PAT001', 
           email: 'john.smith@email.com'
         };
         return next();
@@ -26,12 +22,10 @@ class AuthMiddleware {
         });
       }
 
-      const token = authHeader.substring(7); // Remove 'Bearer ' prefix
+      const token = authHeader.substring(7);
 
-      // For real JWT tokens
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       
-      // Add user info to request
       req.user = {
         id: decoded.id,
         email: decoded.email
