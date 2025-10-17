@@ -49,12 +49,27 @@ export const useAppointment = () => {
     }
   }, []);
 
+  const getPatientDetails = useCallback(async (patientId) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await appointmentService.getPatientDetails(patientId);
+      return response;
+    } catch (err) {
+      setError(err);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   return {
     loading,
     error,
     getDoctors,
     getSlots,
     bookAppointment,
+    getPatientDetails,
     clearError,
   };
 };
