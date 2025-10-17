@@ -1,4 +1,3 @@
-// frontend/src/services/appointmentService.js
 import axios from 'axios';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
@@ -18,6 +17,15 @@ apiClient.interceptors.request.use((config) => {
 });
 
 class AppointmentService {
+  async getPatientDetails(patientId) {
+    try {
+      const response = await apiClient.get(`/patients/${patientId}`);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
   async getDoctorsBySpecialty(specialty) {
     try {
       const response = await apiClient.get(`/appointments/doctors/${specialty}`);
@@ -43,15 +51,6 @@ class AppointmentService {
       return response.data;
     } catch (error) {
       console.error('API Error:', error.response?.data);
-      throw this.handleError(error);
-    }
-  }
-
-  async getPatientDetails(patientId) {
-    try {
-      const response = await apiClient.get(`/patients/${patientId}`);
-      return response.data;
-    } catch (error) {
       throw this.handleError(error);
     }
   }
