@@ -10,10 +10,8 @@ const apiClient = axios.create({
   }
 });
 
-// Demo token for development (optional now since auth is commented out)
 const DEMO_TOKEN = 'demo-token-123';
 
-// Add token to all requests (optional)
 apiClient.interceptors.request.use((config) => {
   config.headers.Authorization = `Bearer ${DEMO_TOKEN}`;
   return config;
@@ -45,6 +43,15 @@ class AppointmentService {
       return response.data;
     } catch (error) {
       console.error('API Error:', error.response?.data);
+      throw this.handleError(error);
+    }
+  }
+
+  async getPatientDetails(patientId) {
+    try {
+      const response = await apiClient.get(`/patients/${patientId}`);
+      return response.data;
+    } catch (error) {
       throw this.handleError(error);
     }
   }
