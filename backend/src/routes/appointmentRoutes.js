@@ -1,4 +1,3 @@
-// backend/src/routes/appointmentRoutes.js
 const express = require('express');
 const { body, param, validationResult } = require('express-validator');
 const Appointment = require('../models/Appointment');
@@ -7,7 +6,6 @@ const Patient = require('../models/Patient');
 
 const router = express.Router();
 
-// Validation middleware - Updated to match frontend data structure
 const appointmentValidation = [
   body('doctorId')
     .notEmpty().withMessage('Doctor ID is required')
@@ -45,7 +43,6 @@ const appointmentValidation = [
     .withMessage('Reason for visit must not exceed 500 characters')
 ];
 
-// Get doctors by specialty
 router.get('/doctors/:specialty', async (req, res) => {
   try {
     const { specialty } = req.params;
@@ -70,7 +67,6 @@ router.get('/doctors/:specialty', async (req, res) => {
   }
 });
 
-// Get available slots for a doctor on a specific date
 router.get('/slots/:doctorId/:date', async (req, res) => {
   try {
     const { doctorId, date } = req.params;
@@ -92,7 +88,6 @@ router.get('/slots/:doctorId/:date', async (req, res) => {
       });
     }
 
-    // Get doctor's availability
     const doctor = await Doctor.findById(doctorId);
     if (!doctor || !doctor.isActive) {
       return res.status(404).json({
@@ -101,7 +96,6 @@ router.get('/slots/:doctorId/:date', async (req, res) => {
       });
     }
 
-    // Get existing appointments for that date
     const startOfDay = new Date(appointmentDate);
     startOfDay.setHours(0, 0, 0, 0);
     
@@ -117,10 +111,8 @@ router.get('/slots/:doctorId/:date', async (req, res) => {
       status: { $nin: ['CANCELLED'] }
     });
 
-    // Get day of week
     const dayOfWeek = appointmentDate.toLocaleDateString('en-US', { weekday: 'long' });
     
-    // Find availability for that day
     const dayAvailability = doctor.availability.find(avail => avail.dayOfWeek === dayOfWeek);
     
     if (!dayAvailability) {
@@ -131,7 +123,6 @@ router.get('/slots/:doctorId/:date', async (req, res) => {
       });
     }
 
-    // Filter out booked slots
     const bookedSlots = existingAppointments.map(apt => apt.timeSlot.startTime);
     const availableSlots = dayAvailability.slots
       .filter(slot => slot.isAvailable && !bookedSlots.includes(slot.startTime))
@@ -184,7 +175,6 @@ router.post('/', appointmentValidation, async (req, res) => {
       reasonForVisit
     });
 
-    // Verify doctor exists and is active
     const doctor = await Doctor.findById(doctorId);
     if (!doctor || !doctor.isActive) {
       return res.status(404).json({
@@ -193,7 +183,6 @@ router.post('/', appointmentValidation, async (req, res) => {
       });
     }
 
-    // Find patient by patientId (PAT001 format) or MongoDB _id
     let patient;
     if (patientId.startsWith('PAT')) {
       patient = await Patient.findOne({ patientId: patientId });
@@ -208,7 +197,6 @@ router.post('/', appointmentValidation, async (req, res) => {
       });
     }
 
-    // Check if slot is still available
     const appointmentDateObj = new Date(appointmentDate);
     const startOfDay = new Date(appointmentDateObj);
     startOfDay.setHours(0, 0, 0, 0);
@@ -234,7 +222,6 @@ router.post('/', appointmentValidation, async (req, res) => {
       });
     }
 
-    // Verify the time slot exists in doctor's availability
     const dayOfWeek = appointmentDateObj.toLocaleDateString('en-US', { weekday: 'long' });
     const dayAvailability = doctor.availability.find(avail => avail.dayOfWeek === dayOfWeek);
     
@@ -256,7 +243,6 @@ router.post('/', appointmentValidation, async (req, res) => {
       });
     }
 
-    // Create appointment
     const appointment = new Appointment({
       patientId: patient._id,
       patientName: `${patient.firstName} ${patient.lastName}`,
@@ -276,7 +262,6 @@ router.post('/', appointmentValidation, async (req, res) => {
 
     await appointment.save();
 
-    // Update doctor's appointment count
     doctor.totalAppointments += 1;
     await doctor.save();
 
@@ -306,10 +291,8 @@ router.post('/', appointmentValidation, async (req, res) => {
   }
 });
 
-// Get patient appointments
 router.get('/patient', async (req, res) => {
   try {
-    // For demo purposes, use PAT001 or get from query
     const patientId = req.query.patientId || 'PAT001';
     
     let patient;
